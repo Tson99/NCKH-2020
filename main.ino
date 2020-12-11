@@ -1,3 +1,8 @@
+// MultiStepper.pde
+// -*- mode: C++ -*-
+// Use MultiStepper class to manage multiple steppers and make them all move to 
+// the same position at the same time for linear 2d (or 3d) motion.
+
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 AccelStepper stepperX(1,2,3);
@@ -17,11 +22,28 @@ long zTemp = 0;
 String temp;
 String serialString;
 
+void setup() {
+  Serial.begin(9600);
 
-String serData;
-int pin = 4;
-long point[100][2]; 
-int i = 0;
+  // Configure each stepper
+  stepperX.setMaxSpeed(5000);
+  stepperY.setMaxSpeed(5000);
+  stepperZ.setMaxSpeed(1000);
+  //stepperX.setAcceleration(50.0);
+  //stepperY.setAcceleration(50.0);
+  //stepperZ.setAcceleration(50.0);
+
+  // Then give them to MultiStepper to manage
+  steppers.addStepper(stepperX);
+  steppers.addStepper(stepperY);
+  steppers.addStepper(stepperZ);
+  while(1){
+      if(Serial.available()){
+           serialString = Serial.readStringUntil('#');//$asd;asd;asd#
+           move3DStepper(serialString); 
+      }  
+  } 
+}
 
 void move3DStepper(String positions){
     temp = positions;
@@ -39,17 +61,16 @@ void move3DStepper(String positions){
         
         long xCoordsLeapMotion = position3D[0].toInt();
         long yCoordsLeapMotion = position3D[1].toInt();
-        int zCoordsLeapMotion = position3D[2].toInt();      
-
+        long zCoordsLeapMotion = position3D[2].toInt();      
+//        Serial.println(xCoords);
+//        Serial.println(yCoords);
+//        Serial.println(zCoords);
 
         //Calculate the real X,Y,Z coordinates to move the steppers
         long xFinalCoords = xCoordsLeapMotion - xTemp;
         long yFinalCoords = yCoordsLeapMotion - yTemp;
         int zFinalCoords = zCoordsLeapMotion - zTemp;
 
-        //Serial.print(xFinalCoords);
-        //Serial.print(yFinalCoords);
-        //Serial.print(zFinalCoords);
         
         positionsFinal[0] = xFinalCoords;
         positionsFinal[1] = yFinalCoords;
@@ -63,8 +84,8 @@ void move3DStepper(String positions){
         stepperX.setCurrentPosition(0);
         stepperY.setCurrentPosition(0);
         stepperZ.setCurrentPosition(0);
-        stepperX.setMaxSpeed(5000); //doan sau
-        stepperY.setMaxSpeed(5000); //doan sau
+        stepperX.setMaxSpeed(5000);
+        stepperY.setMaxSpeed(5000);
         stepperZ.setMaxSpeed(1000);
 
         //Re-assign the temp values to current position
@@ -74,34 +95,7 @@ void move3DStepper(String positions){
     }
 }
 
-void setup() {
-  Serial.begin(9600);
-
-  // Configure each stepper
-  stepperX.setMaxSpeed(5000); //doan dau
-  stepperY.setMaxSpeed(5000); //doan dau
-  stepperZ.setMaxSpeed(1000);
-  //stepperX.setAcceleration(50.0);
-  //stepperY.setAcceleration(50.0);
-  //stepperZ.setAcceleration(50.0);
-
-  // Then give them to MultiStepper to manage
-  steppers.addStepper(stepperX);
-  steppers.addStepper(stepperY);
-  steppers.addStepper(stepperZ);
-}
-
 
 void loop() {
-  while (Serial.available() > 0) {
-    char rec = Serial.read();
-    serData += rec;
-    if (rec == '#') 
-    {
-      move3DStepper(serData);
-      Serial.print(serData);
-      serData = "";
-    }
-  }
-  delay(10);
+
 }
